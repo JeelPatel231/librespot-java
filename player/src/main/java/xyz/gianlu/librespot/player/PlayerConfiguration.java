@@ -19,6 +19,7 @@ package xyz.gianlu.librespot.player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import xyz.gianlu.librespot.audio.decoders.AudioQuality;
+import xyz.gianlu.librespot.player.mixing.output.SinkOutput;
 
 import java.io.File;
 
@@ -37,8 +38,7 @@ public final class PlayerConfiguration {
 
     // Output
     public final AudioOutput output;
-    public final String outputClass;
-    public final Object[] outputClassParams;
+    public final SinkOutput outputClass;
     public final File outputPipe;
     public final File metadataPipe;
     public final String[] mixerSearchKeywords;
@@ -54,7 +54,7 @@ public final class PlayerConfiguration {
     public final File localFilesPath;
 
     private PlayerConfiguration(AudioQuality preferredQuality, boolean enableNormalisation, boolean useAlbumGain, float normalisationPregain, boolean autoplayEnabled, int crossfadeDuration, boolean preloadEnabled,
-                                AudioOutput output, String outputClass, Object[] outputClassParams, File outputPipe, File metadataPipe, String[] mixerSearchKeywords, boolean logAvailableMixers, int releaseLineDelay,
+                                AudioOutput output, SinkOutput outputClass, File outputPipe, File metadataPipe, String[] mixerSearchKeywords, boolean logAvailableMixers, int releaseLineDelay,
                                 int initialVolume, int volumeSteps, boolean bypassSinkVolume, File localFilesPath) {
         this.preferredQuality = preferredQuality;
         this.enableNormalisation = enableNormalisation;
@@ -64,7 +64,6 @@ public final class PlayerConfiguration {
         this.crossfadeDuration = crossfadeDuration;
         this.output = output;
         this.outputClass = outputClass;
-        this.outputClassParams = outputClassParams;
         this.outputPipe = outputPipe;
         this.metadataPipe = metadataPipe;
         this.mixerSearchKeywords = mixerSearchKeywords;
@@ -93,8 +92,7 @@ public final class PlayerConfiguration {
 
         // Output
         private AudioOutput output = AudioOutput.MIXER;
-        private String outputClass;
-        private Object[] outputClassParams;
+        private SinkOutput outputClass;
         private File outputPipe;
         private File metadataPipe;
         private String[] mixerSearchKeywords;
@@ -147,15 +145,11 @@ public final class PlayerConfiguration {
             return this;
         }
 
-        public Builder setOutputClass(String outputClass) {
+        public Builder setOutputClass(SinkOutput outputClass) {
             this.outputClass = outputClass;
             return this;
         }
 
-        public Builder setOutputClassParams(Object[] outputClassParams) {
-            this.outputClassParams = outputClassParams;
-            return this;
-        }
 
         public Builder setOutputPipe(File outputPipe) {
             this.outputPipe = outputPipe;
@@ -216,7 +210,7 @@ public final class PlayerConfiguration {
         @Contract(value = " -> new", pure = true)
         public @NotNull PlayerConfiguration build() {
             return new PlayerConfiguration(preferredQuality, enableNormalisation, useAlbumGain, normalisationPregain, autoplayEnabled, crossfadeDuration, preloadEnabled,
-                    output, outputClass, outputClassParams, outputPipe, metadataPipe, mixerSearchKeywords, logAvailableMixers, releaseLineDelay,
+                    output, outputClass, outputPipe, metadataPipe, mixerSearchKeywords, logAvailableMixers, releaseLineDelay,
                     initialVolume, volumeSteps, bypassSinkVolume, localFilesPath);
         }
     }
