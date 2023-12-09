@@ -56,6 +56,11 @@ public class CdnManager {
         this.session = session;
     }
 
+
+    public CdnUrlWrapper getTrackCdnUrl(@NotNull ByteString fileId) throws CdnException, IOException, MercuryClient.MercuryException {
+        return new CdnUrlWrapper(fileId);
+    }
+
     @NotNull
     private InputStream getHead(@NotNull ByteString fileId) throws IOException {
         Response resp = session.client().newCall(new Request.Builder()
@@ -125,6 +130,19 @@ public class CdnManager {
         InternalResponse(byte[] buffer, Headers headers) {
             this.buffer = buffer;
             this.headers = headers;
+        }
+    }
+
+
+    public class CdnUrlWrapper {
+        private final CdnUrl cdnUrl;
+        public CdnUrlWrapper(ByteString fileId) throws CdnException, IOException, MercuryClient.MercuryException {
+            HttpUrl initial = getAudioUrl(fileId);
+            this.cdnUrl = new CdnUrl(fileId, initial);
+        }
+
+        public HttpUrl url() throws CdnException {
+            return cdnUrl.url();
         }
     }
 
