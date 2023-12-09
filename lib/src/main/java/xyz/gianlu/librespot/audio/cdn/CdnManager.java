@@ -19,6 +19,7 @@ package xyz.gianlu.librespot.audio.cdn;
 import com.google.protobuf.ByteString;
 import com.spotify.metadata.Metadata;
 import com.spotify.storage.StorageResolve.StorageResolveResponse;
+import kotlin.ranges.IntRange;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +40,13 @@ import xyz.gianlu.librespot.mercury.MercuryClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import static java.util.stream.IntStream.range;
 import static xyz.gianlu.librespot.audio.storage.ChannelManager.CHUNK_SIZE;
 
 /**
@@ -89,12 +93,33 @@ public class CdnManager {
                 session.cache(), new AesAudioDecrypt(key), haltListener);
     }
 
+    @NotNull
+    public List<HttpUrl> getAllCdnAudioUrl(@NotNull ByteString fileId) throws IOException, CdnException, MercuryClient.MercuryException {
+        try (Response resp = session.api().send("GET", String.format("/storage-resolve/v2/files/audio/interactive/10/%s?product=9", Utils.bytesToHex(fileId)), null, null)) {
+            if (resp.code() != 200)
+                throw new IOException(resp.code() + ": " + resp.message());
+
+            ResponseBody body = resp.body();
+            if (body == null) throw new IOException("Response body is empty!");
+
+            StorageResolveResponse proto = StorageResolveResponse.parseFrom(body.byteStream());
+            if (proto.getResult() == StorageResolveResponse.Result.CDN) {
+                return range(0, proto.getCdnurlCount())
+                        .mapToObj(proto::getCdnurl)
+                        .map(HttpUrl::get)
+                        .collect(Collectors.toList());
+//                LOGGER.debug("Fetched CDN url for {}: {}", Utils.bytesToHex(fileId), url);
+            } else {
+                throw new CdnException(String.format("Could not retrieve CDN url! {result: %s}", proto.getResult()));
+            }
+        }
+    }
     /**
      * This is used only to RENEW the url if needed.
      */
     @NotNull
     private HttpUrl getAudioUrl(@NotNull ByteString fileId) throws IOException, CdnException, MercuryClient.MercuryException {
-        try (Response resp = session.api().send("GET", String.format("/storage-resolve/files/audio/interactive/%s", Utils.bytesToHex(fileId)), null, null)) {
+        try (Response resp = session.api().send("GET", String.format("/storage-resolve/v2/files/audio/interactive/10/%s?product=9", Utils.bytesToHex(fileId)), null, null)) {
             if (resp.code() != 200)
                 throw new IOException(resp.code() + ": " + resp.message());
 
