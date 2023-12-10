@@ -93,27 +93,6 @@ public class CdnManager {
                 session.cache(), new AesAudioDecrypt(key), haltListener);
     }
 
-    @NotNull
-    public List<HttpUrl> getAllCdnAudioUrl(@NotNull ByteString fileId) throws IOException, CdnException, MercuryClient.MercuryException {
-        try (Response resp = session.api().send("GET", String.format("/storage-resolve/v2/files/audio/interactive/10/%s?product=9", Utils.bytesToHex(fileId)), null, null)) {
-            if (resp.code() != 200)
-                throw new IOException(resp.code() + ": " + resp.message());
-
-            ResponseBody body = resp.body();
-            if (body == null) throw new IOException("Response body is empty!");
-
-            StorageResolveResponse proto = StorageResolveResponse.parseFrom(body.byteStream());
-            if (proto.getResult() == StorageResolveResponse.Result.CDN) {
-                return range(0, proto.getCdnurlCount())
-                        .mapToObj(proto::getCdnurl)
-                        .map(HttpUrl::get)
-                        .collect(Collectors.toList());
-//                LOGGER.debug("Fetched CDN url for {}: {}", Utils.bytesToHex(fileId), url);
-            } else {
-                throw new CdnException(String.format("Could not retrieve CDN url! {result: %s}", proto.getResult()));
-            }
-        }
-    }
     /**
      * This is used only to RENEW the url if needed.
      */
@@ -166,7 +145,7 @@ public class CdnManager {
             this.cdnUrl = new CdnUrl(fileId, initial);
         }
 
-        public HttpUrl url() throws CdnException {
+        public HttpUrl getLatestUrl() throws CdnException {
             return cdnUrl.url();
         }
     }
